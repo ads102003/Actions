@@ -1,0 +1,54 @@
+name: "Build Solution"
+description: "Increments version and builds solution with MSBuild"
+
+inputs:
+  branch-postfix:
+    description: "Postfix to add to version number for non-main branches"
+    required: false
+    default: ""
+  version-prefix:
+    description: "Prefix to add to version number for builds"
+    required: true
+    default: ""
+  build-configuration:
+    description: "Configuration to build the solution in"
+    required: false
+    default: "Release"
+  project-name:
+    description: "Name of the project/solution to build"
+    required: true
+  repo-token:
+    description: "GitHub token for version increment"
+    required: true
+  version:
+    description: "icremental version"
+    required: true
+
+outputs:
+  version:
+    description: "The full version number used in the build"
+    value: ${{inputs.version-prefix}}.${{ vars.VERSION }}${{ inputs.branch-postfix }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Increment Version
+      uses: action-pack/increment@v2
+      with:
+        name: "VERSION"
+        token: ${{ inputs.repo-token }}
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Build Solution
+      shell: pwsh
+      run: |
+        # $startPath = Join-Path (Get-Location) 'src' 'bin' $env:BUILD 'net7.0'
+        msbuild ${{ inputs.project-name }}.sln -t:rebuild -restore -property:Configuration=${{ inputs.build-configuration }} -property:Version=${{inputs.version-prefix}}.${{ vars.VERSION }}${{ inputs.branch-postfix }}
+
+    # - name: Upload Build Artifacts
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: ${{ inputs.project-name }}
+    #     path:

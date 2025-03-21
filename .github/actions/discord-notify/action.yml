@@ -1,0 +1,27 @@
+name: "Discord Notification"
+description: "Send a Discord notification about build status"
+
+inputs:
+  webhook-url:
+    description: "Discord webhook URL"
+    required: true
+  version:
+    description: "Build version number"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Send Discord Notification
+      if: always()
+      uses: Ilshidur/action-discord@master
+      env:
+        DISCORD_WEBHOOK: ${{ inputs.webhook-url }}
+      with:
+        args: |
+          {
+            "embeds": [{
+              "color": ${{ job.status == 'success' && '6284127' || '16538684' }},
+              "description": "Build [${{ inputs.version }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) [${{ github.sha }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}) of ${{ github.repository }}@${{ github.ref_name }} by **${{ github.actor }}** ${{ job.status == 'success' && 'completed' || 'failed' }}"
+            }]
+          }

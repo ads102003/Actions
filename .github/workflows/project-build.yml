@@ -1,0 +1,64 @@
+name: Build and Deploy
+
+on:
+  workflow_call:
+    inputs:
+      branch-postfix:
+        required: false
+        type: string
+      project-name:
+        required: true
+        type: string
+      version-prefix:
+        required: true
+        type: string
+    secrets:
+      REPO_ACCESS_TOKEN:
+        required: true
+      MYGET_API_KEY:
+        required: true
+      DISCORD_WEBHOOK:
+        required: true
+
+env:
+  BUILD: ${{ inputs.branch-postfix == 'master' && 'Release' || 'Debug' }}
+
+jobs:
+  build:
+    name: Build and Deploy
+    runs-on: windows-2022
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Build Solution
+        id: build
+        uses: ads102003/Actions/.github/actions/build-solution@main
+        with:
+          project-name: ${{ inputs.project-name }}
+          branch-postfix: ${{ inputs.branch-postfix }}
+          repo-token: ${{ secrets.REPO_ACCESS_TOKEN }}
+          version-prefix: ${{ inputs.version-prefix }}
+          version: ${{ vars.VERSION }}
+        env:
+          BUILD: ${{ env.BUILD }}
+
+      - name: Package NuGet
+        if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop')
+        run: |
+          Get-ChildItem "src\bin\Release" -Recurse *.nupkg | ForEach-Object {
+            echo "Found NuGet package: $($_.FullName)"
+            echo "PACKAGE_PATH=$($_.FullName)" >> $env:GITHUB_ENV
+          }
+
+      - name: Push to MyGet
+        if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop')
+        run: |
+          dotnet nuget push "${{ env.PACKAGE_PATH }}" --source "https://www.myget.org/f/oxide/api/v2/package" --api-key "${{ secrets.MYGET_API_KEY }}"
+
+      - name: Discord Notification
+        uses: ./.github/actions/discord-notify
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
+          version: ${{ steps.build.outputs.version }}

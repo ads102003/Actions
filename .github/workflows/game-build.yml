@@ -10,9 +10,9 @@ on:
         required: true
         type: string
     secrets:
-        REPO_ACCESS_TOKEN:
-            required: true
-      
+      REPO_ACCESS_TOKEN:
+        required: true
+
 jobs:
   build:
     name: Build Oxide Solution
@@ -22,17 +22,12 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Increment Version
-        uses: action-pack/increment@v2
-        with:
-          name: "VERSION"
-          token: ${{ secrets.REPO_ACCESS_TOKEN }}
-
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v2
-
       - name: Build Solution
-        run: msbuild Oxide.${{ inputs.game }}.sln -t:rebuild -restore -property:Configuration=Release -property:Version=2.0.${{ vars.VERSION }}${{ inputs.branch-postfix }}
+        uses: ./.github/actions/build-solution
+        with:
+          project-name: Oxide.${{ inputs.game }}
+          branch-postfix: ${{ inputs.branch-postfix }}
+          repo-token: ${{ secrets.REPO_ACCESS_TOKEN }}
 
       - name: Compress Bundles
         run: |
