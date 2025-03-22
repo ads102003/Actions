@@ -79,3 +79,4 @@ jobs:
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
           version: ${{ needs.build.outputs.version }}
+          status: ${{ needs.build.result }}
