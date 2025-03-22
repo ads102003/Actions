@@ -13,15 +13,8 @@ runs:
   using: "composite"
   steps:
     - name: Send Discord Notification
-      if: always()
-      uses: Ilshidur/action-discord@master
-      env:
-        DISCORD_WEBHOOK: ${{ inputs.webhook-url }}
+      uses: tsickert/discord-webhook@v7.0.0
       with:
-        args: |
-          {
-            "embeds": [{
-              "color": ${{ job.status == 'success' && '6284127' || '16538684' }},
-              "description": "Build [${{ inputs.version }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) [${{ github.sha }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}) of ${{ github.repository }}@${{ github.ref_name }} by **${{ github.actor }}** ${{ job.status == 'success' && 'completed' || 'failed' }}"
-            }]
-          }
+        webhook-url: ${{ inputs.webhook-url }}
+        embed-color: ${{ job.status == 'success' && '6284127' || '16538684' }}
+        embed-description: "Build [${{ inputs.version }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) [${{ github.sha }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}) of ${{ github.repository }}@${{ github.ref_name }} by **${{ github.actor }}** ${{ job.status == 'success' && 'completed' || 'failed' }}"
