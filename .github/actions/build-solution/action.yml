@@ -21,13 +21,13 @@ inputs:
     description: "GitHub token for version increment"
     required: true
   version:
-    description: "icremental version"
+    description: "Incremental version"
     required: true
 
 outputs:
   version:
     description: "The full version number used in the build"
-    value: ${{inputs.version-prefix}}.${{ inputs.version }}-${{ inputs.branch-postfix }}
+    value: ${{inputs.version-prefix}}.${{ inputs.version }}${{ inputs.branch-postfix }}
 
 runs:
   using: "composite"
@@ -43,4 +43,4 @@ runs:
 
     - name: Build Solution
       shell: pwsh
-      run: msbuild ${{ inputs.project-name }}.sln -t:rebuild -restore -property:Configuration=${{ inputs.build-configuration }} -property:Version=${{inputs.version-prefix}}.${{ inputs.version }}-${{ inputs.branch-postfix }}
+      run: msbuild ${{ inputs.project-name }}.sln -t:rebuild -restore -property:Configuration=${{ inputs.build-configuration }} -property:Version=${{inputs.version-prefix}}.${{ inputs.version }}${{ inputs.branch-postfix }}
